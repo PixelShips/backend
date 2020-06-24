@@ -1,6 +1,6 @@
 ### Informacje o grze
 ##### Statki
-Długość i szerokość na planszy `100px x 100px` (a więc wartośći w %)
+Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
 
 | Nazwa       | Wartość | Długość | Szerokość | Ilość |
 |-------------|:-------:|:-------:|:---------:|:-----:|
