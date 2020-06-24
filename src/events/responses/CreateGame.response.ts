@@ -1,1 +1,4 @@
-export class CreateGameResponse {}
+export interface CreateGameResponse {
+  message: string;
+  gameId: string;
+}

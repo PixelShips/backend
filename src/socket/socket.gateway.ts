@@ -13,61 +13,41 @@ import { CreateGameMessage } from '../events/messages/CreateGame.message';
 import { JoinGameMessage } from '../events/messages/JoinGame.message';
 import { GameService } from '../services/game.service';
 import { PlayerService } from '../services/player.service';
+import { SocketService } from '../services/socket.service';
 
 @WebSocketGateway()
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  constructor(private gameService: GameService, private playerService: PlayerService) { }
+  constructor(
+    private socketService: SocketService,
+    private gameService: GameService,
+    private playerService: PlayerService
+  ) {}
 
   @WebSocketServer()
   protected server: Server;
 
   handleConnection(client: Socket): any {
-    this.playerService.create(client);
-    client.emit(EventTypes.CONNECT, "CONNECT");
+    this.socketService.handleConnection(client);
   }
 
   handleDisconnect(client: Socket): any {
-    // @TODO: delete player
-    client.emit(EventTypes.DISCONNECT, "DISCONNECT");
+    this.socketService.handleDisconnect(client);
   }
 
   @SubscribeMessage(EventTypes.CREATE_GAME)
   handleCreateGameEvent(@MessageBody(new ValidationPipe()) data: CreateGameMessage, @ConnectedSocket() client: Socket): any {
-    const player = this.playerService.getPlayer(client);
-    const game = this.gameService.create();
-    game.join(player);
-    const message = {
-      gameId: game.getId(),
-      message: "GAME CREATED"
-    };
-    client.emit(EventTypes.MESSAGE, message)
+    this.gameService.createGame(client);
   }
 
   @SubscribeMessage(EventTypes.JOIN_GAME)
   handleJoinGameEvent(@MessageBody(new ValidationPipe()) data: JoinGameMessage, @ConnectedSocket() client: Socket): any {
-    const player = this.playerService.getPlayer(client);
-    const game = this.gameService.getGameById(data.id);
-    game.join(player);
-    const message = {
-      gameId: game.getId(),
-      message: "GAME JOINED"
-    };
-    client.emit(EventTypes.MESSAGE, message)
+    this.gameService.joinToGame(client, data.id);
   }
 
   @SubscribeMessage(EventTypes.DEBUG)
   handleTestEvent(@MessageBody() data: any, @ConnectedSocket() client: Socket): any {
-    const player = this.playerService.getPlayer(client);
-    const game = this.gameService.getGameById(player.gameId);
-    const message = {
-      playerId: player.id,
-      playerGameId: player.gameId,
-      gamePlayersLength: game.players.length,
-      gamePlayers: game.players.map(p => p.id)
-    };
-
-    client.emit(EventTypes.MESSAGE, message)
+    this.gameService.debug(client);
+    this.playerService.debug(client);
   }
 
 }
