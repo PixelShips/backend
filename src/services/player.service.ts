@@ -10,6 +10,7 @@ export class PlayerService {
   public create(socket: Socket): Player {
     const player = new Player(socket);
     this.players.set(player.id, player);
+    console.log('New player created', player.id);
     return player;
   }
 
@@ -18,6 +19,7 @@ export class PlayerService {
   }
 
   public deletePlayer(id: string) {
+    console.log('Player deleted', id);
     this.players.has(id) ? this.players.delete(id) : null;
   }
 

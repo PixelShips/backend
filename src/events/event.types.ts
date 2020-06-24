@@ -1,6 +1,5 @@
 export enum EventTypes {
-  CONNECT = 'connect',
-  DISCONNECT = 'disconnect',
+  CONNECTION_STATUS = 'connection-status',
   MESSAGE = 'message',
   CREATE_GAME = 'create-game',
   JOIN_GAME = 'join-game',

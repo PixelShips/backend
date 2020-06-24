@@ -19,11 +19,17 @@ export class GameService {
   }
 
   public createGame(client: Socket): Game {
+    const player = this.playerService.getPlayer(client.id);
+    if (player.gameId) {
+      console.log(`Player wants to create new game but he is already in the game ${player.gameId}`);
+      throw new WsException(`Player is already in the game ${player.gameId}`)
+    }
+
     const id = uuidv4();
     const game = new Game(id);
+    console.log('New game created', id);
     this.games.set(id, game);
 
-    const player = this.playerService.getPlayer(client.id);
     game.join(player);
 
     const message: CreateGameResponse = {
@@ -36,9 +42,18 @@ export class GameService {
   }
 
   public joinToGame(client: Socket, gameId: string) {
-    const game = this.getGameById(gameId);
-
     const player = this.playerService.getPlayer(client.id);
+
+    if (player.gameId) {
+      console.log(`Player wants to join to game ${gameId} but he is already in the game ${player.gameId}`);
+      throw new WsException(`Player is already in the game ${player.gameId}`)
+    }
+
+    const game = this.getGameById(gameId);
+    if (!game) {
+      console.log(`Player wants to join to game ${gameId} but the game is not exist`);
+      throw new WsException('Game is not exist')
+    }
     game.join(player);
 
     const newPlayerMessage: JoinGameResponse = {
@@ -59,10 +74,6 @@ export class GameService {
 
   public getGameById(id: string): Game {
     return this.games.get(id);
-  }
-
-  public deleteGame(id: string) {
-    this.games.has(id) ? this.games.delete(id) : null;
   }
 
   public debug(client: Socket) {

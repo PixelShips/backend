@@ -7,7 +7,7 @@ import {
   MessageBody, ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '../pipes/validation.pipe';
 import { EventTypes } from '../events/event.types';
 import { CreateGameMessage } from '../events/messages/CreateGame.message';
 import { JoinGameMessage } from '../events/messages/JoinGame.message';
@@ -35,12 +35,12 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage(EventTypes.CREATE_GAME)
-  handleCreateGameEvent(@MessageBody(new ValidationPipe()) data: CreateGameMessage, @ConnectedSocket() client: Socket): any {
+  handleCreateGameEvent(@ConnectedSocket() client: Socket): any {
     this.gameService.createGame(client);
   }
 
   @SubscribeMessage(EventTypes.JOIN_GAME)
-  handleJoinGameEvent(@MessageBody(new ValidationPipe()) data: JoinGameMessage, @ConnectedSocket() client: Socket): any {
+  handleJoinGameEvent(@MessageBody(ValidationPipe) data: JoinGameMessage, @ConnectedSocket() client: Socket): any {
     this.gameService.joinToGame(client, data.id);
   }
 
@@ -49,5 +49,4 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.gameService.debug(client);
     this.playerService.debug(client);
   }
-
 }

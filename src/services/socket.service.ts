@@ -14,11 +14,12 @@ export class SocketService {
   public handleConnection(client: Socket): any {
     const player = this.playerService.create(client);
     console.log(`New client connected: ${player.id}`);
-    client.emit(EventTypes.CONNECT, 'Connected')
+    client.emit(EventTypes.CONNECTION_STATUS, 'Connected')
   }
 
   public handleDisconnect(client: Socket): any {
     const player = this.playerService.getPlayer(client.id);
+    console.log(`Client disconnected: ${player.id}`);
     if (player) {
       const playerGame = this.gameService.getGameById(player.gameId);
       if (playerGame) {
@@ -26,6 +27,6 @@ export class SocketService {
       }
       this.playerService.deletePlayer(client.id);
     }
-    client.emit(EventTypes.DISCONNECT, "Disconnect");
+    client.emit(EventTypes.CONNECTION_STATUS, 'Disconnect');
   }
 }
