@@ -14,6 +14,7 @@ import { JoinGameMessage } from '../events/messages/JoinGame.message';
 import { GameService } from '../services/game.service';
 import { PlayerService } from '../services/player.service';
 import { SocketService } from '../services/socket.service';
+import { SetShipMessage } from '../events/messages/SetShip.message';
 
 @WebSocketGateway()
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -44,6 +45,10 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.gameService.joinToGame(client, data.id);
   }
 
+  @SubscribeMessage(EventTypes.SET_SHIP)
+  handleSetShipEvent(@MessageBody(ValidationPipe) data: SetShipMessage, @ConnectedSocket() client: Socket): any {
+    this.gameService.setShip(client, data);
+  }
 
 
   @SubscribeMessage(EventTypes.DEBUG)

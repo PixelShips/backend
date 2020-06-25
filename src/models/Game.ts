@@ -1,8 +1,18 @@
 import { WsException } from '@nestjs/websockets';
 import { Player } from './Player';
+import { SetShipMessage } from '../events/messages/SetShip.message';
+import { Ship } from './ships/Ship';
+import { Destroyer } from './ships/Destroyer';
+import { Carrier } from './ships/Carrier';
+import { Battleship } from './ships/Battleship';
+import { Submarine } from './ships/Submarine';
+import { PatrolBoat } from './ships/PatrolBoat';
+import { EventTypes } from '../events/event.types';
+import { SetShipResponse } from '../events/responses/SetShip.response';
 
 export class Game {
   public players: Map<string, Player> = new Map<string, Player>();
+  private ships: Map<string, Ship[]> = new Map<string, Ship[]>();
 
   constructor(private id: string, private name: string) {
     console.log('New game created', id, name);
@@ -14,6 +24,7 @@ export class Game {
       throw new WsException(`This game "${this.name}" is already full`);
     }
     this.players.set(player.id, player);
+    this.ships.set(player.id, []);
     player.socket.join(this.id, () => {
       console.log(`Player ${player.id} joined to game "${this.name}" (${this.id})`);
       player.gameId = this.id;
@@ -22,12 +33,54 @@ export class Game {
 
   public exit(player: Player) {
     this.players.has(player.id) ? this.players.delete(player.id) : null;
+    this.ships.has(player.id) ? this.ships.delete(player.id) : null;
     console.log(`Player ${player.id} exited from game "${this.name}" (${this.id})`);
     if (this.players.size > 0) {
       for (const player of this.players.values()) {
         player.socket.disconnect()
       }
     }
+  }
+
+  public setShip(player: Player, data: SetShipMessage) {
+    let ship: Ship;
+
+    switch (data.shipType) {
+      case 'carrier':
+        ship = new Carrier(data.location_x, data.location_y);
+        break;
+      case 'battleship':
+        ship = new Battleship(data.location_x, data.location_y);
+        break;
+      case 'destroyer':
+        ship = new Destroyer(data.location_x, data.location_y);
+        break;
+      case 'submarine':
+        ship = new Submarine(data.location_x, data.location_y);
+        break;
+      case 'patrol-boat':
+        ship = new PatrolBoat(data.location_x, data.location_y);
+        break;
+    }
+    const currentPlayerShip: Ship[] = this.ships.get(player.id);
+
+    if (!ship.isValidLocation()) {
+      throw new WsException('Ship location is not valid')
+    }
+    // @TODO: check if can (free space, limit for specific ship);
+    this.ships.set(player.id, [...currentPlayerShip, ship]);
+
+    const message: SetShipResponse = {
+      message: `Ship (${ship.getName()}) created!`,
+      currentShips: this.ships.get(player.id).map(s => {
+        return {
+          name: s.getName(),
+          x: s.getX(),
+          y: s.getY()
+        }
+      })
+    };
+    player.socket.emit(EventTypes.MESSAGE, message)
   }
 
   public getId(): string {

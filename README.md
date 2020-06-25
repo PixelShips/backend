@@ -14,7 +14,7 @@ Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
 ##### Rozpoczęcie rozgrywki
 - Tworzenie pokoju do gry (jeśli użytkownik nie jest w żadnym pokoju)
     ```
-    socket.emit('create-room')
+    socket.emit('create-room', { name: <GAME_NAME> })
     ```
     
     ```    
@@ -22,6 +22,7 @@ Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
   
     {
       "gameId": <GAME_ID>,
+      "gameName" <GAME_NAME>,
       "message": "Game created!"
     }
     ```
@@ -36,9 +37,38 @@ Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
   
     {
       "gameId": <GAME_ID>,
+      "gameName" <GAME_NAME>,
       "message": "Joined to game!", 
       "players": [<PLAYER_1_ID>, <PLAYER_2_ID>]
     }
     ```
   
   Jeśli jeden z uczestników gry w danym pokoju straci połączenie, drugi gracz automatycznie zostanie rozłączony.
+  
+  
+##### Ustawianie statkówg
+
+```
+socket.emit('set-ship',
+    {
+        shipType: <SHIP_NAME (lowercase)>,
+        location_x: [0.0, 1.0],
+        location_y: [0.0, 1.0]
+    })
+```
+    
+```
+socket.on('message')
+
+{
+    "message": "Ship (<SHIP_NAME>) created!",
+    "currentShips": [
+        {
+            "name": <SHIP_NAME>,
+            "x": <X>,
+            "y": <Y>
+        },
+        ...
+    ]
+}
+```

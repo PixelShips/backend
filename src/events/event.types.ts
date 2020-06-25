@@ -1,7 +1,10 @@
 export enum EventTypes {
   CONNECTION_STATUS = 'connection-status',
   MESSAGE = 'message',
+  DEBUG = 'debug',
+
   CREATE_GAME = 'create-game',
   JOIN_GAME = 'join-game',
-  DEBUG = 'debug'
+
+  SET_SHIP = 'set-ship'
 }

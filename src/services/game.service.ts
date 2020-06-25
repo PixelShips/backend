@@ -7,6 +7,8 @@ import { PlayerService } from './player.service';
 import { CreateGameResponse } from '../events/responses/CreateGame.response';
 import { EventTypes } from '../events/event.types';
 import { JoinGameResponse } from '../events/responses/JoinGame.response';
+import { SetShipMessage } from '../events/messages/SetShip.message';
+import { Player } from '../models/Player';
 
 @Injectable()
 export class GameService {
@@ -76,6 +78,16 @@ export class GameService {
 
   public getGameById(id: string): Game {
     return this.games.get(id);
+  }
+
+  public setShip(client: Socket, data: SetShipMessage) {
+    const player: Player = this.playerService.getPlayer(client.id);
+    if (!player.gameId) {
+      console.log(`Player ${player.id} wants to set ship but he is not connected to any game`);
+      throw new WsException(`Player is not connected to any game`)
+    }
+    const game: Game = this.getGameById(player.gameId);
+    game.setShip(player, data)
   }
 
   public debug(client: Socket) {
