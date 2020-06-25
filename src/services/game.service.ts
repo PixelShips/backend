@@ -18,7 +18,7 @@ export class GameService {
     }, 2000);
   }
 
-  public createGame(client: Socket): Game {
+  public createGame(client: Socket, gameName: string): Game {
     const player = this.playerService.getPlayer(client.id);
     if (player.gameId) {
       console.log(`Player wants to create new game but he is already in the game ${player.gameId}`);
@@ -26,14 +26,14 @@ export class GameService {
     }
 
     const id = uuidv4();
-    const game = new Game(id);
-    console.log('New game created', id);
+    const game = new Game(id, gameName);
     this.games.set(id, game);
 
     game.join(player);
 
     const message: CreateGameResponse = {
       message: 'Game created!',
+      gameName: game.getName(),
       gameId: game.getId()
     };
     client.emit(EventTypes.MESSAGE, message);
@@ -59,12 +59,14 @@ export class GameService {
     const newPlayerMessage: JoinGameResponse = {
       message: `Joined to game!`,
       gameId: game.getId(),
+      gameName: game.getName(),
       players: game.getPlayerIds()
     };
 
     const otherPlayersMessage: JoinGameResponse = {
       message: `Player ${player.id} joined to game!`,
       gameId: game.getId(),
+      gameName: game.getName(),
       players: game.getPlayerIds()
     };
 
@@ -81,6 +83,7 @@ export class GameService {
     for (const [id, game] of this.games) {
       gameInfos.push({
         gameId: id,
+        gameName: game.getName(),
         players: game.getPlayerIds()
       })
     }
