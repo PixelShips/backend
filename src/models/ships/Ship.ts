@@ -3,6 +3,13 @@ export enum SHIP_STATUS {
   SUNK = 'sunk'
 }
 
+export interface ShipCoordinates {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
 export abstract class Ship {
   protected abstract readonly name: string;
   protected abstract readonly value: number;
@@ -14,11 +21,6 @@ export abstract class Ship {
   protected y: number;
 
   constructor(x: number, y: number) {
-    // console.log(`x = ${x}, y = ${y}`);
-    // console.log(`minX = ${this.minX()}, maxX = ${this.maxX()}, minY = ${this.minY()}, maxY = ${this.maxY()}`);
-    // if (x < this.minX() || x > this.maxX() || y < this.minY() || y > this.maxY()) {
-    //   throw new Error('ZLA LOKALIZACJA')
-    // }
     this.x = x;
     this.y = y;
   }
@@ -38,7 +40,7 @@ export abstract class Ship {
     return 1.0 - (this.height / 2.0);
   }
 
-  public isValidLocation() {
+  public isValidLocation(): boolean {
     return this.x > this.minX() && this.x < this.maxX() && this.y > this.minY() && this.y < this.maxY();
   }
 
@@ -52,6 +54,38 @@ export abstract class Ship {
 
   public getY(): number {
     return this.y;
+  }
+
+
+  //   (left, top).  .  .  .  .  .  .  .  (right, top)
+  //       .                                   .
+  //       .                                   .
+  //       .               (x, y)              .
+  //       .                                   .
+  //       .                                   .
+  //   (left, bottom).  .  .  .  .  .  .(right, bottom)
+
+  public getCoordinates(): ShipCoordinates {
+    const left = this.x - (this.width / 2.0);
+    const right = this.x + (this.width / 2.0);
+    const top = this.y - (this.height / 2.0);
+    const bottom = this.y + (this.height / 2.0);
+    return { left, right, top, bottom } as ShipCoordinates;
+  }
+
+  public isIntersect(otherShip: Ship): boolean {
+    console.log('\n');
+    console.log('CHECKING INTERSECT')
+    console.log('EXISTING SHIP', otherShip.getName(), otherShip.getCoordinates());
+    console.log('NEW SHIP', this.getName(), this.getCoordinates());
+    const s1: ShipCoordinates = this.getCoordinates();
+    const s2: ShipCoordinates = otherShip.getCoordinates();
+    return !(
+        s2.left > s1.right ||
+        s2.right < s1.left ||
+        s2.top > s1.bottom ||
+        s2.bottom < s1.top
+    );
   }
 }
 

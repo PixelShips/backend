@@ -12,7 +12,7 @@ import { SetShipResponse } from '../events/responses/SetShip.response';
 
 export class Game {
   public players: Map<string, Player> = new Map<string, Player>();
-  private ships: Map<string, Ship[]> = new Map<string, Ship[]>();
+  public ships: Map<string, Ship[]> = new Map<string, Ship[]>();
 
   constructor(private id: string, private name: string) {
     console.log('New game created', id, name);
@@ -42,32 +42,8 @@ export class Game {
     }
   }
 
-  public setShip(player: Player, data: SetShipMessage) {
-    let ship: Ship;
-
-    switch (data.shipType) {
-      case 'carrier':
-        ship = new Carrier(data.location_x, data.location_y);
-        break;
-      case 'battleship':
-        ship = new Battleship(data.location_x, data.location_y);
-        break;
-      case 'destroyer':
-        ship = new Destroyer(data.location_x, data.location_y);
-        break;
-      case 'submarine':
-        ship = new Submarine(data.location_x, data.location_y);
-        break;
-      case 'patrol-boat':
-        ship = new PatrolBoat(data.location_x, data.location_y);
-        break;
-    }
+  public setShip(player: Player, ship: Ship) {
     const currentPlayerShip: Ship[] = this.ships.get(player.id);
-
-    if (!ship.isValidLocation()) {
-      throw new WsException('Ship location is not valid')
-    }
-    // @TODO: check if can (free space, limit for specific ship);
     this.ships.set(player.id, [...currentPlayerShip, ship]);
 
     const message: SetShipResponse = {

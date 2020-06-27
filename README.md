@@ -14,7 +14,7 @@ Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
 ##### Rozpoczęcie rozgrywki
 - Tworzenie pokoju do gry (jeśli użytkownik nie jest w żadnym pokoju)
     ```
-    socket.emit('create-room', { name: <GAME_NAME> })
+    socket.emit('create-game', { name: <GAME_NAME> })
     ```
     
     ```    
@@ -29,7 +29,7 @@ Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
 
 - Dołączenie do istniejącego pokoju (jeśli użytkownik nie jest w żadnym pokoju)
     ```
-    socket.emit('join-room', { id: <GAME_ID> })
+    socket.emit('join-game', { id: <GAME_ID> })
     ```
     
     ```

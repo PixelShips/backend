@@ -9,12 +9,14 @@ import { EventTypes } from '../events/event.types';
 import { JoinGameResponse } from '../events/responses/JoinGame.response';
 import { SetShipMessage } from '../events/messages/SetShip.message';
 import { Player } from '../models/Player';
+import { ShipService } from './ship.service';
+import { Ship } from '../models/ships/Ship';
 
 @Injectable()
 export class GameService {
   private games: Map<string, Game> = new Map<string, Game>();
 
-  constructor(private playerService: PlayerService) {
+  constructor(private playerService: PlayerService, private shipService: ShipService) {
     setInterval(() => {
       this.deleteEmptyGames();
     }, 2000);
@@ -87,7 +89,16 @@ export class GameService {
       throw new WsException(`Player is not connected to any game`)
     }
     const game: Game = this.getGameById(player.gameId);
-    game.setShip(player, data)
+    const ship: Ship = this.shipService.createShip(data);
+    const isValid: boolean = this.shipService.isValid(ship, game, player);
+    console.log('IS VALID?', isValid);
+    console.groupEnd();
+    if (isValid) {
+      game.setShip(player, ship)
+    } else {
+      console.error('Ship location is not valid');
+      throw new WsException('Ship location is not valid');
+    }
   }
 
   public debug(client: Socket) {
