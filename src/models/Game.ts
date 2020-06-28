@@ -1,14 +1,9 @@
 import { WsException } from '@nestjs/websockets';
 import { Player } from './Player';
-import { SetShipMessage } from '../events/messages/SetShip.message';
-import { Ship } from './ships/Ship';
-import { Destroyer } from './ships/Destroyer';
-import { Carrier } from './ships/Carrier';
-import { Battleship } from './ships/Battleship';
-import { Submarine } from './ships/Submarine';
-import { PatrolBoat } from './ships/PatrolBoat';
+import { Ship, ShipStatus } from './ships/Ship';
 import { EventTypes } from '../events/event.types';
 import { SetShipResponse } from '../events/responses/SetShip.response';
+import { Shoot } from './Shoot';
 
 export class Game {
   public players: Map<string, Player> = new Map<string, Player>();
@@ -59,6 +54,30 @@ export class Game {
     player.socket.emit(EventTypes.MESSAGE, message)
   }
 
+  public shoot(player: Player, shoot: Shoot) {
+    const enemyShips: Ship[] = this.getEnemyShips(player);
+    // const enemy: Player = this.getEnemy(player);
+
+    for (const ship of enemyShips) {
+      const isInRange: boolean = ship.isInShootRange(shoot);
+      if (isInRange) {
+        const damage: number = ship.calculateDamage(shoot);
+        ship.hit(damage);
+        player.socket.emit(EventTypes.MESSAGE, {
+          ship: ship.getName(),
+          damage: damage
+        });
+
+        if (ship.getStatus() === ShipStatus.SUNK) {
+          player.socket.emit(EventTypes.MESSAGE, {
+            ship: ship.getName(),
+            status: 'sunk'
+          });
+        }
+      }
+    }
+  }
+
   public getId(): string {
     return this.id;
   }
@@ -73,5 +92,16 @@ export class Game {
       playerIds.push(id)
     }
     return playerIds;
+  }
+
+  private getEnemyShips(player: Player): Ship[] {
+    const enemy: Player = this.getEnemy(player);
+    return this.ships.get(enemy.id);
+  }
+
+  private getEnemy(player: Player): Player {
+    const playerIds: string[] = this.getPlayerIds();
+    const enemy: string[] = playerIds.filter(pid => pid !== player.id);
+    return this.players.get(enemy[0]);
   }
 }

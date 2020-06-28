@@ -8,6 +8,7 @@ import { Submarine } from '../models/ships/Submarine';
 import { PatrolBoat } from '../models/ships/PatrolBoat';
 import { Game } from '../models/Game';
 import { Player } from '../models/Player';
+import { Shoot } from '../models/Shoot';
 
 @Injectable()
 export class ShipService {
@@ -72,4 +73,5 @@ export class ShipService {
     }
     return isValid;
   }
+
 }

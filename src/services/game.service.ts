@@ -11,6 +11,8 @@ import { SetShipMessage } from '../events/messages/SetShip.message';
 import { Player } from '../models/Player';
 import { ShipService } from './ship.service';
 import { Ship } from '../models/ships/Ship';
+import { ShootMessage } from '../events/messages/Shoot.message';
+import { Shoot } from '../models/Shoot';
 
 @Injectable()
 export class GameService {
@@ -99,6 +101,17 @@ export class GameService {
       console.error('Ship location is not valid');
       throw new WsException('Ship location is not valid');
     }
+  }
+
+  public shoot(client: Socket, data: ShootMessage) {
+    const player: Player = this.playerService.getPlayer(client.id);
+    if (!player.gameId) {
+      console.log(`Player ${player.id} wants to shoot but he is not connected to any game`);
+      throw new WsException(`Player is not connected to any game`)
+    }
+    const game: Game = this.getGameById(player.gameId);
+    const shoot: Shoot = new Shoot(data.location_x, data.location_y);
+    game.shoot(player, shoot);
   }
 
   public debug(client: Socket) {

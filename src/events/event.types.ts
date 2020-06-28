@@ -6,5 +6,6 @@ export enum EventTypes {
   CREATE_GAME = 'create-game',
   JOIN_GAME = 'join-game',
 
-  SET_SHIP = 'set-ship'
+  SET_SHIP = 'set-ship',
+  SHOOT = 'shot'
 }
