@@ -11,6 +11,14 @@ Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
 | Patrol Boat |    2    |   6px   |    3px    |
 
 ### Obsługa eventów (`socket.io`)
+
+##### Fazy gry
+Status o aktualnej fazie gry jest wysyłany na kanał `game-status`:
+- `CREATED` - po utworzeniu gry przez jednego z graczy
+- `SETUP` - po dołączeniu do gry drugiego zawodnika
+- `ACTIVE` - po ustawieniu wszystkich 10 statków na planszy (5 na każdego zawodnika)
+- `FINISHED` - po zbiciu wszystkich statków jednego z graczy (_w fazie implementacji_)
+
 ##### Rozpoczęcie rozgrywki
 - Tworzenie pokoju do gry (jeśli użytkownik nie jest w żadnym pokoju)
     ```
@@ -126,3 +134,4 @@ socket.emit('shoot',
         "damage": null
     }
     ```
+  

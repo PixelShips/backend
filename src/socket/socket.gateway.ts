@@ -44,7 +44,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(EventTypes.CREATE_GAME)
   handleCreateGameEvent(@MessageBody(ValidationPipe) data: CreateGameMessage, @ConnectedSocket() client: Socket): any {
-    this.gameService.createGame(client, data.name);
+    this.gameService.createGame(client, data.name, this.server);
   }
 
   @SubscribeMessage(EventTypes.JOIN_GAME)

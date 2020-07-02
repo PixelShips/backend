@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Game } from '../models/Game';
 import { v4 as uuidv4 } from 'uuid';
 import { WsException } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { PlayerService } from './player.service';
 import { CreateGameResponse } from '../events/responses/CreateGame.response';
 import { EventTypes } from '../events/event.types';
@@ -25,7 +25,7 @@ export class GameService {
     }, 2000);
   }
 
-  public createGame(client: Socket, gameName: string): Game {
+  public createGame(client: Socket, gameName: string, server: Server): Game {
     const player = this.playerService.getPlayer(client.id);
     if (player.gameId) {
       Logger.error(`Gracz chce dołączyć do nowej gry ale jest już w "${player.gameId}"`);
@@ -33,7 +33,7 @@ export class GameService {
     }
 
     const id = uuidv4();
-    const game = new Game(id, gameName);
+    const game = new Game(id, gameName, server);
     this.games.set(id, game);
 
     game.join(player);

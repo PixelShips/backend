@@ -1,18 +1,31 @@
 import { WsException } from '@nestjs/websockets';
 import { Player } from './Player';
-import { Ship, ShipStatus } from './ships/Ship';
+import { Ship, SHIP_TYPE_NAMES, ShipStatus } from './ships/Ship';
 import { EventTypes } from '../events/event.types';
 import { SetShipResponse } from '../events/responses/SetShip.response';
 import { Shoot } from './Shoot';
 import { ShootResponse } from '../events/responses/Shoot.response';
 import { Logger } from '@nestjs/common';
+import { Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { Server } from 'socket.io';
+
+export enum GameStatus {
+  CREATED = 'CREATED',
+  SETUP = 'SETUP',
+  ACTIVE = 'ACTIVE',
+  FINISHED = 'FINISHED'
+}
 
 export class Game {
   public players: Map<string, Player> = new Map<string, Player>();
   public ships: Map<string, Ship[]> = new Map<string, Ship[]>();
+  private gameStatus: Subject<GameStatus> = new Subject<GameStatus>();
 
-  constructor(private id: string, private name: string) {
+  constructor(private id: string, private name: string, private server: Server) {
     Logger.log(`Utworzono nową gre "${name}" (${id})`, 'GAME');
+    this.initSubscriptions();
+    this.gameStatus.next(GameStatus.CREATED);
   }
 
   public join(player: Player) {
@@ -26,6 +39,11 @@ export class Game {
       Logger.log(`Gracz ${player.id} dołączył do gry "${this.name}" (${this.id})`, 'GAME');
       player.gameId = this.id;
     });
+
+
+    if (this.players.size === 2) {
+      this.gameStatus.next(GameStatus.SETUP);
+    }
   }
 
   public exit(player: Player) {
@@ -59,9 +77,12 @@ export class Game {
         }
       })
     };
-    Logger.log(`Statek (${ship.getName()}) postawiony!`, 'GAME')
+    Logger.log(`Statek (${ship.getName()}) postawiony!`, 'GAME');
     console.log(ship.getCoordinates());
-    player.socket.emit(EventTypes.MESSAGE, message)
+    player.socket.emit(EventTypes.MESSAGE, message);
+
+    this.checkPlayersReadiness()
+
   }
 
   public shoot(player: Player, shoot: Shoot) {
@@ -138,4 +159,40 @@ export class Game {
     const enemy: string[] = playerIds.filter(pid => pid !== player.id);
     return this.players.get(enemy[0]);
   }
+
+  private initSubscriptions(): void {
+    // this.gameStatus.pipe(filter(status => status === GameStatus.CREATED)).subscribe(() => {
+    //   this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Gra utworzona!' });
+    // });
+
+    this.gameStatus.pipe(filter(status => status === GameStatus.SETUP)).subscribe((status: GameStatus) => {
+      Logger.log('Gra w fazie ustawiania staków', 'GAME STATUS');
+      this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Gra w fazie ustawiania staków', status });
+    });
+
+    this.gameStatus.pipe(filter(status => status === GameStatus.ACTIVE)).subscribe((status: GameStatus) => {
+      Logger.log('Statki ustawione przez obu graczy, czas na grę!', 'GAME STATUS');
+      this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Statki ustawione przez obu graczy, czas na grę!', status });
+    });
+
+    this.gameStatus.pipe(filter(status => status === GameStatus.FINISHED)).subscribe((status: GameStatus) => {
+      Logger.log('Gra zakończona!', 'GAME STATUS');
+      this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Gra zakończona!', status });
+    });
+  }
+
+  private checkPlayersReadiness() {
+    let readiness = this.players.size === 2;
+    for (const player of this.players.values()) {
+      if (this.ships.get(player.id).length === SHIP_TYPE_NAMES.length) {
+        player.isReady = true;
+      }
+      readiness = readiness && player.isReady
+    }
+
+    if (readiness) {
+      this.gameStatus.next(GameStatus.ACTIVE)
+    }
+  }
+
 }
