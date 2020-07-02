@@ -36,6 +36,12 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.socketService.handleDisconnect(client);
   }
 
+  @SubscribeMessage(EventTypes.DEBUG)
+  handleTestEvent(@MessageBody() data: any, @ConnectedSocket() client: Socket): any {
+    this.gameService.debug(client);
+    this.playerService.debug(client);
+  }
+
   @SubscribeMessage(EventTypes.CREATE_GAME)
   handleCreateGameEvent(@MessageBody(ValidationPipe) data: CreateGameMessage, @ConnectedSocket() client: Socket): any {
     this.gameService.createGame(client, data.name);
@@ -49,12 +55,6 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(EventTypes.SET_SHIP)
   handleSetShipEvent(@MessageBody(ValidationPipe) data: SetShipMessage, @ConnectedSocket() client: Socket): any {
     this.gameService.setShip(client, data);
-  }
-
-  @SubscribeMessage(EventTypes.DEBUG)
-  handleTestEvent(@MessageBody() data: any, @ConnectedSocket() client: Socket): any {
-    this.gameService.debug(client);
-    this.playerService.debug(client);
   }
 
   @SubscribeMessage(EventTypes.SHOOT)

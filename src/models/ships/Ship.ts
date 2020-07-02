@@ -1,4 +1,5 @@
 import { Shoot } from '../Shoot';
+import { Logger } from '@nestjs/common';
 
 export enum ShipStatus {
   LIVE = 'live',
@@ -44,7 +45,7 @@ export abstract class Ship {
   }
 
   public isValidLocation(): boolean {
-    return this.x > this.minX() && this.x < this.maxX() && this.y > this.minY() && this.y < this.maxY();
+    return this.x >= this.minX() && this.x <= this.maxX() && this.y >= this.minY() && this.y <= this.maxY();
   }
 
   public getArea(): number {
@@ -65,7 +66,9 @@ export abstract class Ship {
 
   public hit(value: number) {
     this.health = this.health - value;
+    Logger.log(`Statek trafiony, pozostałe zycie: ${this.health}`, 'SHIP');
     if (this.health <= 0) {
+      Logger.log(`Statek zatopiony ${this.getName()}`, 'SHIP');
       this.health = 0;
       this.status = ShipStatus.SUNK;
     }
@@ -110,10 +113,6 @@ export abstract class Ship {
   }
 
   public isIntersect(otherShip: Ship): boolean {
-    console.log('\n');
-    console.log('CHECKING INTERSECT');
-    console.log('EXISTING SHIP', otherShip.getName(), otherShip.getCoordinates());
-    console.log('NEW SHIP', this.getName(), this.getCoordinates());
     const s1: Coordinates = this.getCoordinates();
     const s2: Coordinates = otherShip.getCoordinates();
     return this._isIntersect(s1, s2);

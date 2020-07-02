@@ -7,5 +7,5 @@ export enum EventTypes {
   JOIN_GAME = 'join-game',
 
   SET_SHIP = 'set-ship',
-  SHOOT = 'shot'
+  SHOOT = 'shoot'
 }

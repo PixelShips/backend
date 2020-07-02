@@ -8,7 +8,8 @@ import { Submarine } from '../models/ships/Submarine';
 import { PatrolBoat } from '../models/ships/PatrolBoat';
 import { Game } from '../models/Game';
 import { Player } from '../models/Player';
-import { Shoot } from '../models/Shoot';
+import { WsException } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class ShipService {
@@ -36,40 +37,33 @@ export class ShipService {
   }
 
   public isValid(ship: Ship, game: Game, player: Player): boolean {
-    console.group('CHECKING VALIDATION');
-    console.log('SHIP: ', ship.getName(), ship.getCoordinates());
-
     const isValidShipLocation: boolean = ship.isValidLocation();
-    console.log('IS VALID LOCATION (MIN, MAX)', isValidShipLocation);
     if (!isValidShipLocation) {
-      return false;
+      Logger.error(`Statek ${ship.getName()} nie mieści się na planszy gry`);
+      console.error(ship.getCoordinates());
+      throw new WsException('Statek nie mieści się na planszy gry');
     }
 
     const currentShips: Ship[] = game.ships.get(player.id);
-    console.log('CURRENT SHIPS', currentShips.map(s => {
-      return {
-        name: s.getName(), c: s.getCoordinates()
-      }
-    }));
 
     const isValidLocationSpace: boolean = this.locationValidator(ship, currentShips);
+    if (!isValidLocationSpace) {
+      throw new WsException('W tym miejscu jest już inny statek');
+    }
 
-    // @TODO: valid limits
     return isValidShipLocation && isValidLocationSpace;
   }
 
   private locationValidator(ship: Ship, currentShips: Ship[]): boolean {
     let isValid = true;
     for (const s of currentShips) {
-      if (ship.isIntersect(s)) {
-        console.log('INTERSECTION FOUND!');
-        console.log('\tShip 1: ', ship.getName(), ship.getCoordinates());
-        console.log('\tShip 2: ', s.getName(), s.getCoordinates());
-        console.log('\n');
+      if (ship.isIntersect(s) && s.getName() !== ship.getName()) {
+        Logger.error('W tym miejscu jest już inny statek');
+        console.error('Ship 1: ', ship.getName(), ship.getCoordinates());
+        console.error('Ship 2: ', s.getName(), s.getCoordinates());
         isValid = false;
         break;
       }
-      console.log('\n');
     }
     return isValid;
   }

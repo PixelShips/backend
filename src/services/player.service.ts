@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Player } from '../models/Player';
 import { Socket } from 'socket.io';
 import { EventTypes } from '../events/event.types';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class PlayerService {
@@ -10,7 +11,7 @@ export class PlayerService {
   public create(socket: Socket): Player {
     const player = new Player(socket);
     this.players.set(player.id, player);
-    console.log('New player created', player.id);
+    Logger.log(`Utworzono nowego gracza ${player.id}`, 'PLAYER');
     return player;
   }
 
@@ -19,7 +20,7 @@ export class PlayerService {
   }
 
   public deletePlayer(id: string) {
-    console.log('Player deleted', id);
+    Logger.warn(`Gracz usunięty ${id}`, 'PLAYER');
     this.players.has(id) ? this.players.delete(id) : null;
   }
 

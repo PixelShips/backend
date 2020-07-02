@@ -4,24 +4,26 @@ import { Ship, ShipStatus } from './ships/Ship';
 import { EventTypes } from '../events/event.types';
 import { SetShipResponse } from '../events/responses/SetShip.response';
 import { Shoot } from './Shoot';
+import { ShootResponse } from '../events/responses/Shoot.response';
+import { Logger } from '@nestjs/common';
 
 export class Game {
   public players: Map<string, Player> = new Map<string, Player>();
   public ships: Map<string, Ship[]> = new Map<string, Ship[]>();
 
   constructor(private id: string, private name: string) {
-    console.log('New game created', id, name);
+    Logger.log(`Utworzono nową gre "${name}" (${id})`, 'GAME');
   }
 
   public join(player: Player) {
     if (this.players.size > 1) {
-      console.log(`Player ${player.id} wants to join to game "${this.name}" (${this.id}) but game is already full`);
-      throw new WsException(`This game "${this.name}" is already full`);
+      Logger.error(`Gracz ${player.id} chce dołączyć do gry "${this.name}" (${this.id}) ale nie ma juz miejsc`);
+      throw new WsException(`W grze "${this.name}" nie ma już miejsc`);
     }
     this.players.set(player.id, player);
     this.ships.set(player.id, []);
     player.socket.join(this.id, () => {
-      console.log(`Player ${player.id} joined to game "${this.name}" (${this.id})`);
+      Logger.log(`Gracz ${player.id} dołączył do gry "${this.name}" (${this.id})`, 'GAME');
       player.gameId = this.id;
     });
   }
@@ -29,7 +31,7 @@ export class Game {
   public exit(player: Player) {
     this.players.has(player.id) ? this.players.delete(player.id) : null;
     this.ships.has(player.id) ? this.ships.delete(player.id) : null;
-    console.log(`Player ${player.id} exited from game "${this.name}" (${this.id})`);
+    Logger.warn(`Gracz ${player.id} wyszedł z gry "${this.name}" (${this.id})`, 'GAME');
     if (this.players.size > 0) {
       for (const player of this.players.values()) {
         player.socket.disconnect()
@@ -39,10 +41,16 @@ export class Game {
 
   public setShip(player: Player, ship: Ship) {
     const currentPlayerShip: Ship[] = this.ships.get(player.id);
-    this.ships.set(player.id, [...currentPlayerShip, ship]);
+    const idx = currentPlayerShip.findIndex((s => s.getName() === ship.getName()));
+    if (idx >= 0) {
+      currentPlayerShip[idx] = ship;
+      this.ships.set(player.id, [...currentPlayerShip]);
+    } else {
+      this.ships.set(player.id, [...currentPlayerShip, ship]);
+    }
 
     const message: SetShipResponse = {
-      message: `Ship (${ship.getName()}) created!`,
+      message: `Statek (${ship.getName()}) utworzony!`,
       currentShips: this.ships.get(player.id).map(s => {
         return {
           name: s.getName(),
@@ -51,31 +59,57 @@ export class Game {
         }
       })
     };
+    Logger.log(`Statek (${ship.getName()}) postawiony!`, 'GAME')
+    console.log(ship.getCoordinates());
     player.socket.emit(EventTypes.MESSAGE, message)
   }
 
   public shoot(player: Player, shoot: Shoot) {
     const enemyShips: Ship[] = this.getEnemyShips(player);
-    // const enemy: Player = this.getEnemy(player);
+    const enemy: Player = this.getEnemy(player);
 
     for (const ship of enemyShips) {
+      if (ship.getStatus() === ShipStatus.SUNK) {
+        continue
+      }
       const isInRange: boolean = ship.isInShootRange(shoot);
       if (isInRange) {
         const damage: number = ship.calculateDamage(shoot);
         ship.hit(damage);
-        player.socket.emit(EventTypes.MESSAGE, {
+
+        Logger.log(`Gracz ${player.id} trafił statek ${ship.getName()} zadając obrażenia ${damage}`);
+        const playerMessage: ShootResponse = {
+          message: 'Strzał udany!',
           ship: ship.getName(),
+          shipStatus: ship.getStatus(),
           damage: damage
-        });
+        };
+
+        const enemyMessage: ShootResponse = {
+          message: 'Przeciwnik uszkodził twój statek',
+          ship: ship.getName(),
+          shipStatus: ship.getStatus(),
+          damage: damage
+        };
 
         if (ship.getStatus() === ShipStatus.SUNK) {
-          player.socket.emit(EventTypes.MESSAGE, {
-            ship: ship.getName(),
-            status: 'sunk'
-          });
+          Logger.log(`Gracz ${player.id} zatopił statek ${ship.getName()}`);
+          playerMessage.message = 'Zatopiłeś statek przeciwnika!';
+          enemyMessage.message = 'Twój statek został zatopiony!';
         }
+
+        player.socket.emit(EventTypes.MESSAGE, playerMessage);
+        enemy.socket.emit(EventTypes.MESSAGE, enemyMessage);
+        return
       }
     }
+    const playerMessage: ShootResponse = {
+      message: 'Strzał chybiony!',
+      ship: null,
+      shipStatus: null,
+      damage: null
+    };
+    player.socket.emit(EventTypes.MESSAGE, playerMessage);
   }
 
   public getId(): string {

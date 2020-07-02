@@ -13,6 +13,7 @@ import { ShipService } from './ship.service';
 import { Ship } from '../models/ships/Ship';
 import { ShootMessage } from '../events/messages/Shoot.message';
 import { Shoot } from '../models/Shoot';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class GameService {
@@ -27,8 +28,8 @@ export class GameService {
   public createGame(client: Socket, gameName: string): Game {
     const player = this.playerService.getPlayer(client.id);
     if (player.gameId) {
-      console.log(`Player wants to create new game but he is already in the game ${player.gameId}`);
-      throw new WsException(`Player is already in the game ${player.gameId}`)
+      Logger.error(`Gracz chce dołączyć do nowej gry ale jest już w "${player.gameId}"`);
+      throw new WsException(`Gracz jest już aktywny w "${player.gameId}"`)
     }
 
     const id = uuidv4();
@@ -38,7 +39,7 @@ export class GameService {
     game.join(player);
 
     const message: CreateGameResponse = {
-      message: 'Game created!',
+      message: 'Utworzyłeś nową gre!',
       gameName: game.getName(),
       gameId: game.getId()
     };
@@ -51,26 +52,26 @@ export class GameService {
     const player = this.playerService.getPlayer(client.id);
 
     if (player.gameId) {
-      console.log(`Player wants to join to game ${gameId} but he is already in the game ${player.gameId}`);
-      throw new WsException(`Player is already in the game ${player.gameId}`)
+      Logger.error(`Gracz chce dołączyć do nowej gry ale jest już w "${player.gameId}"`);
+      throw new WsException(`Gracz jest już aktywny w "${player.gameId}"`)
     }
 
     const game = this.getGameById(gameId);
     if (!game) {
-      console.log(`Player wants to join to game ${gameId} but the game is not exist`);
-      throw new WsException('Game is not exist')
+      Logger.error(`Gracz chce dołączyć do "${gameId}" ale taka gra nie istnieje`);
+      throw new WsException('Gra nie istnieje')
     }
     game.join(player);
 
     const newPlayerMessage: JoinGameResponse = {
-      message: `Joined to game!`,
+      message: `Dołączyłeś do gry!`,
       gameId: game.getId(),
       gameName: game.getName(),
       players: game.getPlayerIds()
     };
 
     const otherPlayersMessage: JoinGameResponse = {
-      message: `Player ${player.id} joined to game!`,
+      message: `Gracz ${player.id} dołączył do gry!`,
       gameId: game.getId(),
       gameName: game.getName(),
       players: game.getPlayerIds()
@@ -87,27 +88,23 @@ export class GameService {
   public setShip(client: Socket, data: SetShipMessage) {
     const player: Player = this.playerService.getPlayer(client.id);
     if (!player.gameId) {
-      console.log(`Player ${player.id} wants to set ship but he is not connected to any game`);
-      throw new WsException(`Player is not connected to any game`)
+      Logger.error(`Gracz ${player.id} chce postawić statek ale nie jest podłączony do gry`);
+      throw new WsException(`Nie jesteś podłączony do gry`)
     }
     const game: Game = this.getGameById(player.gameId);
     const ship: Ship = this.shipService.createShip(data);
     const isValid: boolean = this.shipService.isValid(ship, game, player);
-    console.log('IS VALID?', isValid);
-    console.groupEnd();
+
     if (isValid) {
       game.setShip(player, ship)
-    } else {
-      console.error('Ship location is not valid');
-      throw new WsException('Ship location is not valid');
     }
   }
 
   public shoot(client: Socket, data: ShootMessage) {
     const player: Player = this.playerService.getPlayer(client.id);
     if (!player.gameId) {
-      console.log(`Player ${player.id} wants to shoot but he is not connected to any game`);
-      throw new WsException(`Player is not connected to any game`)
+      Logger.error(`Gracz ${player.id} chce zbić statek ale nie jest podłączony do gry`);
+      throw new WsException(`Nie jesteś podłączony do gry`)
     }
     const game: Game = this.getGameById(player.gameId);
     const shoot: Shoot = new Shoot(data.location_x, data.location_y);
@@ -135,6 +132,7 @@ export class GameService {
   private deleteEmptyGames() {
     for (const game of this.games.values()) {
       if (game.getPlayerIds().length === 0) {
+        Logger.log(`Usunięto nieaktywną grę ${game.getId()}`, 'GAME');
         this.games.delete(game.getId());
       }
     }

@@ -2,13 +2,13 @@
 ##### Statki
 Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
 
-| Nazwa       | Wartość | Długość | Szerokość | Ilość |
-|-------------|:-------:|:-------:|:---------:|:-----:|
-| Carrier     |    5    |   20px  |    5px    |   1   |
-| Battleship  |    4    |   18px  |    4px    |   1   |
-| Destroyer   |    3    |   14px  |    5px    |   2   |
-| Submarine   |    3    |   10px  |    4px    |   2   |
-| Patrol Boat |    2    |   6px   |    3px    |   4   |
+| Nazwa       | Wartość | Długość | Szerokość |
+|-------------|:-------:|:-------:|:---------:|
+| Carrier     |    5    |   20px  |    5px    |
+| Battleship  |    4    |   18px  |    4px    |
+| Destroyer   |    3    |   14px  |    5px    |
+| Submarine   |    3    |   10px  |    4px    |
+| Patrol Boat |    2    |   6px   |    3px    |
 
 ### Obsługa eventów (`socket.io`)
 ##### Rozpoczęcie rozgrywki
@@ -23,7 +23,7 @@ Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
     {
       "gameId": <GAME_ID>,
       "gameName" <GAME_NAME>,
-      "message": "Game created!"
+      "message": "Utworzyłeś nową gre"
     }
     ```
 
@@ -38,7 +38,7 @@ Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
     {
       "gameId": <GAME_ID>,
       "gameName" <GAME_NAME>,
-      "message": "Joined to game!", 
+      "message": "Dołączyłeś do gry!", 
       "players": [<PLAYER_1_ID>, <PLAYER_2_ID>]
     }
     ```
@@ -46,7 +46,7 @@ Długość i szerokość na planszy `100px x 100px` (a więc wartości w %)
   Jeśli jeden z uczestników gry w danym pokoju straci połączenie, drugi gracz automatycznie zostanie rozłączony.
   
   
-##### Ustawianie statkówg
+##### Ustawianie statków
 
 ```
 socket.emit('set-ship',
@@ -56,12 +56,21 @@ socket.emit('set-ship',
         location_y: [0.0, 1.0]
     })
 ```
-    
+###### Walidacja
+- Jeśli wysłany statek nie mieści się na planszy:
+    ```
+    "message": "Statek nie mieści się na planszy gry"
+    ```
+- Jeśli lokalizacja wysłanego statku jest zajęta (pokrycie się z istniejącymi):
+    ```
+    "message": "W tym miejscu jest już inny statek"
+    ```
+   
 ```
 socket.on('message')
 
 {
-    "message": "Ship (<SHIP_NAME>) created!",
+    "message": "Statek (<SHIP_NAME>) utworzony!",
     "currentShips": [
         {
             "name": <SHIP_NAME>,
@@ -72,3 +81,48 @@ socket.on('message')
     ]
 }
 ```
+
+##### Zbijanie statków
+
+```
+socket.emit('shoot',
+    {
+        location_x: [0.0, 1.0],
+        location_y: [0.0, 1.0]
+    })
+```
+    
+- Strzał udany
+    ```
+    socket.on('message')
+    
+    {
+        "message": "Strzał udany!",
+        "ship": <SHIP_NAME>,
+        "shipStatus": <SHIP_STATUS [live, sunk]>,
+        "damage": <SHOOT_DAMAGE>
+    }
+    ```
+- Strzał udany - state przeciwnika zatopiony
+    ```
+    socket.on('message')
+    
+    {
+        "message": "Zatopiłeś statek przeciwnika!",
+        "ship": <SHIP_NAME>,
+        "shipStatus": <SHIP_STATUS [live, sunk]>,
+        "damage": <SHOOT_DAMAGE>
+    }
+    ```
+    
+- Strzał chybiony
+    ```
+    socket.on('message')
+    
+    {
+        "message": "Strzał chybiony!",
+        "ship": null,
+        "shipStatus": null,
+        "damage": null
+    }
+    ```
