@@ -75,7 +75,7 @@ socket.emit('set-ship',
     ```
    
 ```
-socket.on('message')
+socket.on('set-ship')
 
 {
     "message": "Statek (<SHIP_NAME>) utworzony!",

@@ -79,10 +79,9 @@ export class Game {
     };
     Logger.log(`Statek (${ship.getName()}) postawiony!`, 'GAME');
     console.log(ship.getCoordinates());
-    player.socket.emit(EventTypes.MESSAGE, message);
+    player.socket.emit(EventTypes.SET_SHIP, message);
 
     this.checkPlayersReadiness()
-
   }
 
   public shoot(player: Player, shoot: Shoot) {
