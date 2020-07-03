@@ -120,9 +120,9 @@ export class Game {
         }
 
         player.socket.emit(EventTypes.SHOOT, playerMessage);
-        enemy.socket.emit(EventTypes.SHOOT, enemyMessage);
+        player.socket.to(player.gameId).emit(EventTypes.SHOOT, enemyMessage);
         Logger.log(`Teraz kolej na gracza ${enemy.id}`, 'GAME STATUS');
-        enemy.socket.emit(EventTypes.ORDER, { message: 'Teraz twoja kolej!' });
+        player.socket.to(player.gameId).emit(EventTypes.ORDER, { message: 'Teraz twoja kolej!' });
         this.checkShipsLiveness(enemy);
         return
       }
@@ -135,7 +135,7 @@ export class Game {
     };
     player.socket.emit(EventTypes.SHOOT, playerMessage);
     Logger.log(`Teraz kolej na gracza ${enemy.id}`, 'GAME STATUS');
-    enemy.socket.emit(EventTypes.ORDER, { message: 'Teraz twoja kolej!' });
+    player.socket.to(player.gameId).emit(EventTypes.ORDER, { message: 'Teraz twoja kolej!' });
     this.checkShipsLiveness(enemy);
   }
 
@@ -208,7 +208,7 @@ export class Game {
       const player: Player = this.getEnemy(enemy);
       Logger.log(`Gra zakończona, wygrał ${player.id}`, 'GAME STATUS');
       this.gameStatus.next(GameStatus.FINISHED);
-      enemy.socket.emit(EventTypes.PLAYER_STATUS,
+      player.socket.to(player.gameId).emit(EventTypes.PLAYER_STATUS,
         {
           message: 'Przegrałeś!',
           status: 'LOSE'
