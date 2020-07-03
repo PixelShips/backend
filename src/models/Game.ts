@@ -9,6 +9,7 @@ import { Logger } from '@nestjs/common';
 import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Server } from 'socket.io';
+import { GameStatusResponse } from '../events/responses/GameStatus.response';
 
 export enum GameStatus {
   CREATED = 'CREATED',
@@ -130,6 +131,8 @@ export class Game {
       damage: null
     };
     player.socket.emit(EventTypes.SHOOT, playerMessage);
+
+    this.checkShipsLiveness(enemy);
   }
 
   public getId(): string {
@@ -166,17 +169,17 @@ export class Game {
 
     this.gameStatus.pipe(filter(status => status === GameStatus.SETUP)).subscribe((status: GameStatus) => {
       Logger.log('Gra w fazie ustawiania staków', 'GAME STATUS');
-      this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Gra w fazie ustawiania staków', status });
+      this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Gra w fazie ustawiania staków', status } as GameStatusResponse);
     });
 
     this.gameStatus.pipe(filter(status => status === GameStatus.ACTIVE)).subscribe((status: GameStatus) => {
       Logger.log('Statki ustawione przez obu graczy, czas na grę!', 'GAME STATUS');
-      this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Statki ustawione przez obu graczy, czas na grę!', status });
+      this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Statki ustawione przez obu graczy, czas na grę!', status } as GameStatusResponse);
     });
 
     this.gameStatus.pipe(filter(status => status === GameStatus.FINISHED)).subscribe((status: GameStatus) => {
       Logger.log('Gra zakończona!', 'GAME STATUS');
-      this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Gra zakończona!', status });
+      this.server.to(this.id).emit(EventTypes.GAME_STATUS, { message: 'Gra zakończona!', status } as GameStatusResponse);
     });
   }
 
@@ -194,4 +197,26 @@ export class Game {
     }
   }
 
+  private checkShipsLiveness(enemy: Player) {
+    const ships: Ship[] = this.ships.get(enemy.id);
+    const hasLiveShip: boolean = ships.some(s => s.getStatus() === ShipStatus.LIVE);
+    console.log(214, hasLiveShip)
+    console.log(ships);
+    if (!hasLiveShip) {
+      const player: Player = this.getEnemy(enemy);
+      this.gameStatus.next(GameStatus.FINISHED);
+      enemy.socket.emit(EventTypes.PLAYER_STATUS,
+        {
+          message: 'Przegrałeś!',
+          status: 'LOSE'
+        } as GameStatusResponse
+      );
+      player.socket.emit(EventTypes.PLAYER_STATUS,
+        {
+          message: 'Wygrałeś!',
+          status: 'WIN'
+        } as GameStatusResponse
+      );
+    }
+  }
 }

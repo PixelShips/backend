@@ -135,3 +135,23 @@ socket.emit('shoot',
     }
     ```
   
+##### Zbicie wszystkich statków
+- Wygrana
+    ```
+    socket.on('player-status')
+    
+    {
+        "message": "Wygrałeś!",
+        "status": "WIN"
+    }
+    ```
+- Przegrana
+    ```
+    socket.on('player-status')
+    
+    {
+        "message": "Przegrałeś!",
+        "status": "LOSE"
+    }
+    ```
+    
