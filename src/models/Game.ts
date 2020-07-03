@@ -131,7 +131,8 @@ export class Game {
       damage: null
     };
     player.socket.emit(EventTypes.SHOOT, playerMessage);
-
+    Logger.log(`Teraz kolej na gracza ${enemy.id}`, 'GAME STATUS');
+    enemy.socket.emit(EventTypes.ORDER, { message: 'Teraz twoja kolej!' });
     this.checkShipsLiveness(enemy);
   }
 
@@ -200,10 +201,9 @@ export class Game {
   private checkShipsLiveness(enemy: Player) {
     const ships: Ship[] = this.ships.get(enemy.id);
     const hasLiveShip: boolean = ships.some(s => s.getStatus() === ShipStatus.LIVE);
-    console.log(214, hasLiveShip)
-    console.log(ships);
     if (!hasLiveShip) {
       const player: Player = this.getEnemy(enemy);
+      Logger.log(`Gra zakończona, wygrał ${player.id}`, 'GAME STATUS');
       this.gameStatus.next(GameStatus.FINISHED);
       enemy.socket.emit(EventTypes.PLAYER_STATUS,
         {

@@ -8,6 +8,7 @@ export enum EventTypes {
 
   SET_SHIP = 'set-ship',
   SHOOT = 'shoot',
+  ORDER = 'order',
 
   GAME_STATUS = 'game-status',
   PLAYER_STATUS = 'player-status'

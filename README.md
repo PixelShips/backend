@@ -135,6 +135,16 @@ socket.emit('shoot',
     }
     ```
   
+###### Kolejność
+Po strzale gracza `A`, zawodnik `B` dostaje wiadomość:
+```
+socket.on('order')
+
+{
+    "message": "Teraz twoja kolej!"
+}
+```
+
 ##### Zbicie wszystkich statków
 - Wygrana
     ```
