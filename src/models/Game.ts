@@ -130,7 +130,7 @@ export class Game {
       shipStatus: null,
       damage: null
     };
-    player.socket.emit(EventTypes.MESSAGE, playerMessage);
+    player.socket.emit(EventTypes.SHOOT, playerMessage);
   }
 
   public getId(): string {
