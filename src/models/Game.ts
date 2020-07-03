@@ -121,6 +121,9 @@ export class Game {
 
         player.socket.emit(EventTypes.SHOOT, playerMessage);
         enemy.socket.emit(EventTypes.SHOOT, enemyMessage);
+        Logger.log(`Teraz kolej na gracza ${enemy.id}`, 'GAME STATUS');
+        enemy.socket.emit(EventTypes.ORDER, { message: 'Teraz twoja kolej!' });
+        this.checkShipsLiveness(enemy);
         return
       }
     }
