@@ -119,8 +119,8 @@ export class Game {
           enemyMessage.message = 'Twój statek został zatopiony!';
         }
 
-        player.socket.emit(EventTypes.MESSAGE, playerMessage);
-        enemy.socket.emit(EventTypes.MESSAGE, enemyMessage);
+        player.socket.emit(EventTypes.SHOOT, playerMessage);
+        enemy.socket.emit(EventTypes.SHOOT, enemyMessage);
         return
       }
     }

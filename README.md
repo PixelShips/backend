@@ -102,7 +102,7 @@ socket.emit('shoot',
     
 - Strzał udany
     ```
-    socket.on('message')
+    socket.on('shoot')
     
     {
         "message": "Strzał udany!",
@@ -113,7 +113,7 @@ socket.emit('shoot',
     ```
 - Strzał udany - state przeciwnika zatopiony
     ```
-    socket.on('message')
+    socket.on('shoot')
     
     {
         "message": "Zatopiłeś statek przeciwnika!",
@@ -125,7 +125,7 @@ socket.emit('shoot',
     
 - Strzał chybiony
     ```
-    socket.on('message')
+    socket.on('shoot')
     
     {
         "message": "Strzał chybiony!",
