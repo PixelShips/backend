@@ -26,7 +26,7 @@
     "@nestjs/platform-express": "^7.0.0",
     "@nestjs/platform-socket.io": "^7.2.0",
     "@nestjs/websockets": "^7.2.0",
-    "class-transformer": "^0.2.3",
+    "class-transformer": "^0.3.1",
     "class-validator": "latest",
     "lodash": "^4.17.15",
     "reflect-metadata": "^0.1.13",
